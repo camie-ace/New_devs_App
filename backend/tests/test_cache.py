@@ -37,8 +37,14 @@ async def test_cache_is_scoped_by_tenant_and_period(monkeypatch, memory_cache):
 
 
 @pytest.mark.parametrize(
-    "cached", ["not-json", "[]", "null", json.dumps(summary("tenant-b")),
-               json.dumps({**summary("tenant-a"), "total": None})]
+    "cached",
+    [
+        "not-json",
+        "[]",
+        "null",
+        json.dumps(summary("tenant-b")),
+        json.dumps({**summary("tenant-a"), "total": None}),
+    ],
 )
 @pytest.mark.asyncio
 async def test_bad_or_foreign_cache_entry_is_ignored(monkeypatch, memory_cache, cached):

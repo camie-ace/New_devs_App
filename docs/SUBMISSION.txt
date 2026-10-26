@@ -1,0 +1,16 @@
+Repository: https://github.com/camie-ace/New_devs_App
+Findings and verification: https://github.com/camie-ace/New_devs_App/blob/main/docs/INVESTIGATION.md
+Browser demo (45 seconds, silent): https://github.com/camie-ace/New_devs_App/blob/main/docs/evidence/demo.mp4
+Loom outline: https://github.com/camie-ace/New_devs_App/blob/main/docs/WALKTHROUGH.md
+
+Loom URL: [record and paste the required 5–10 minute Loom walkthrough]
+
+The implementation fixes tenant cache collisions, local-calendar reporting,
+exact monetary totals, and fabricated database fallback results. The existing
+architecture and seed data are preserved. Both provided accounts were tested.
+43 regression tests pass, including GitHub Actions on PostgreSQL 15; the
+production frontend build and recorded browser checks pass.
+
+Final submission is pending the required Loom URL and the original email's
+submission destination. The repository does not contain a submission form,
+reply address, email sent time, or deadline timestamp.

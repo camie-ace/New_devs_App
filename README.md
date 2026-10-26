@@ -4,6 +4,7 @@ The existing dashboard now calculates revenue from PostgreSQL, isolates tenants 
 
 - [Findings, root causes, and verification](docs/INVESTIGATION.md)
 - [5–7 minute Loom recording outline](docs/WALKTHROUGH.md)
+- [45-second browser verification recording (MP4, silent)](docs/evidence/demo.mp4)
 - [Original assignment](ASSIGNMENT.md)
 
 ## Run

@@ -1,0 +1,50 @@
+[
+  {
+    "file": "src/App.tsx",
+    "before_errors": 2,
+    "after_errors": 1,
+    "before_warnings": 1,
+    "after_warnings": 1,
+    "new_rule_counts": {}
+  },
+  {
+    "file": "src/contexts/AuthContext.new.tsx",
+    "before_errors": 8,
+    "after_errors": 8,
+    "before_warnings": 2,
+    "after_warnings": 2,
+    "new_rule_counts": {}
+  },
+  {
+    "file": "src/lib/localAuthClient.ts",
+    "before_errors": 6,
+    "after_errors": 6,
+    "before_warnings": 0,
+    "after_warnings": 0,
+    "new_rule_counts": {}
+  },
+  {
+    "file": "src/lib/secureApi.ts",
+    "before_errors": 222,
+    "after_errors": 222,
+    "before_warnings": 0,
+    "after_warnings": 0,
+    "new_rule_counts": {}
+  },
+  {
+    "file": "src/utils/jwtUtils.ts",
+    "before_errors": 4,
+    "after_errors": 4,
+    "before_warnings": 0,
+    "after_warnings": 0,
+    "new_rule_counts": {}
+  },
+  {
+    "file": "src/utils/sessionRecovery.ts",
+    "before_errors": 3,
+    "after_errors": 3,
+    "before_warnings": 0,
+    "after_warnings": 0,
+    "new_rule_counts": {}
+  }
+]

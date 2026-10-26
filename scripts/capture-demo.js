@@ -1,3 +1,5 @@
+// Playwright CLI expects a function expression without a trailing semicolon.
+// prettier-ignore
 async (page) => {
   const origin = new URL(page.url()).origin;
   const pause = (ms) => page.waitForTimeout(ms);

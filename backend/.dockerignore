@@ -1,6 +1,27 @@
-.venv
-__pycache__
-*.py[cod]
-.pytest_cache
+# General
+.git
+.gitignore
+node_modules
+frontend/node_modules
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# OS / editor
+.DS_Store
+*.swp
+.vscode/
+.idea/
+
+# Env / secrets
 .env
+.kamal.env
+
+# Build output
+frontend/dist
+
+# Local Python and test artifacts
+.venv/
+.pytest_cache/
 .env.*

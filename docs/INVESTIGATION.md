@@ -69,10 +69,14 @@ Browser testing also found that the local auth adapter returned different shapes
 
 ## Verification
 
+- **43 tests passed** locally and in [GitHub Actions on PostgreSQL 15](https://github.com/camie-ace/New_devs_App/actions/runs/40357171367). The [captured CI result](evidence/ci-tests.txt) records the passing test step.
+- [Silent browser verification recording, 45 seconds](evidence/demo.mp4). To reproduce it with the Playwright CLI: open the running frontend, run `playwright-cli video-start demo.webm --cursor`, run `playwright-cli run-code --filename=scripts/capture-demo.js`, then run `playwright-cli video-stop`. The separate Loom outline covers the required explanation of root causes and fixes.
 - Regression suite passed against real PostgreSQL with isolated schemas: both provided login accounts; cache warm-up in both tenant orders; monthly/yearly/all-time totals; foreign property access; signed/unsigned/expired/missing-tenant tokens; expired auth cache; wrong passwords; exact sums; half-cent rounding; local month boundaries; leap years; DST; mixed currencies; Redis failures; and database failure behavior.
 - Production frontend build passed.
+- The dashboard and revenue components pass ESLint. Linting the touched legacy frontend modules still reports pre-existing issues; [the baseline comparison](evidence/lint-comparison.json) checks the original snapshot against the solution without adding new rule violations. The rewritten Python services and tests pass Ruff.
 - Browser checks: Sunset March `2250.00 / 4`; February `0.00 / 0`; annual selection; Ocean tenant-only property names; Ocean `prop-001` `0.00 / 0`; logout/login and page reload. The repaired login and dashboard have no browser console errors in the final session.
 - Live API checks used the running application, seeded PostgreSQL and real Redis; see the sanitized captures above.
+- A browser check delayed a previous property's response by 700 ms, switched to a different property, and verified that the delayed response could not overwrite the new selection's total.
 
 The local Docker daemon lacked Compose and the first PostgreSQL image pull exhausted the host disk. Runtime verification therefore used the existing PostgreSQL 16 image, a dedicated Redis container, and the native backend/Vite processes. CI uses the assignment's PostgreSQL 15 version. The higher-level test harness could not launch its missing bundled Chromium executable; browser verification and recordings use the installed Playwright CLI with Chrome instead.
 
