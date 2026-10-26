@@ -3,13 +3,13 @@
 Sum PostgreSQL NUMERIC values at full precision; round once, half up, when
 publishing a two-decimal report. Never combine different currencies.
 """
-from datetime import datetime, timezone
-from decimal import Decimal, ROUND_HALF_UP
+
+from datetime import UTC, datetime
+from decimal import ROUND_HALF_UP, Decimal
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import text
-
 from app.core.database_pool import db_pool
+from sqlalchemy import text
 
 
 class PropertyNotFound(Exception):
@@ -29,23 +29,29 @@ def period_bounds(month: int | None, year: int, property_timezone: str):
     next_month = first_month + 1 if month and month < 12 else 1
     next_year = year if month and month < 12 else year + 1
     return (
-        datetime(year, first_month, 1, tzinfo=zone).astimezone(timezone.utc),
-        datetime(next_year, next_month, 1, tzinfo=zone).astimezone(timezone.utc),
+        datetime(year, first_month, 1, tzinfo=zone).astimezone(UTC),
+        datetime(next_year, next_month, 1, tzinfo=zone).astimezone(UTC),
     )
 
 
 async def list_properties(tenant_id: str):
     await db_pool.initialize()
     async with db_pool.get_session() as session:
-        result = await session.execute(text("""
+        result = await session.execute(
+            text("""
             SELECT id, name, timezone FROM properties
             WHERE tenant_id = :tenant_id ORDER BY name, id
-        """), {"tenant_id": tenant_id})
+        """),
+            {"tenant_id": tenant_id},
+        )
         return [dict(row) for row in result.mappings()]
 
 
 async def calculate_total_revenue(
-    property_id: str, tenant_id: str, month: int | None = None, year: int | None = None,
+    property_id: str,
+    tenant_id: str,
+    month: int | None = None,
+    year: int | None = None,
     db_session=None,
 ):
     if not tenant_id:
@@ -55,12 +61,17 @@ async def calculate_total_revenue(
     if db_session is None:
         await db_pool.initialize()
         async with db_pool.get_session() as session:
-            return await calculate_total_revenue(property_id, tenant_id, month, year, session)
+            return await calculate_total_revenue(
+                property_id, tenant_id, month, year, session
+            )
 
     params = {"property_id": property_id, "tenant_id": tenant_id}
-    property_result = await db_session.execute(text("""
+    property_result = await db_session.execute(
+        text("""
         SELECT timezone FROM properties WHERE id = :property_id AND tenant_id = :tenant_id
-    """), params)
+    """),
+        params,
+    )
     property_timezone = property_result.scalar_one_or_none()
     if property_timezone is None:
         # Same answer for an unknown ID and another tenant's property.
@@ -71,17 +82,20 @@ async def calculate_total_revenue(
         params["start"], params["end"] = period_bounds(month, year, property_timezone)
         period_filter = "AND check_in_date >= :start AND check_in_date < :end"
 
-    result = await db_session.execute(text(f"""
+    result = await db_session.execute(
+        text(f"""
         SELECT currency, SUM(total_amount) AS total, COUNT(*) AS count
         FROM reservations
         WHERE property_id = :property_id AND tenant_id = :tenant_id
         {period_filter}
         GROUP BY currency
-    """), params)
+    """),
+        params,
+    )
     rows = result.mappings().all()
     if len(rows) > 1 or (rows and not rows[0]["currency"]):
         raise MixedCurrencies("Cannot sum multiple or unspecified currencies")
-    total = rows[0]["total"] if rows else Decimal("0")
+    total = rows[0]["total"] if rows else Decimal(0)
     return {
         "property_id": property_id,
         "tenant_id": tenant_id,
@@ -95,7 +109,13 @@ async def calculate_total_revenue(
 
 
 async def calculate_monthly_revenue(
-    property_id: str, month: int, year: int, tenant_id: str, db_session=None,
+    property_id: str,
+    month: int,
+    year: int,
+    tenant_id: str,
+    db_session=None,
 ) -> Decimal:
-    summary = await calculate_total_revenue(property_id, tenant_id, month, year, db_session)
+    summary = await calculate_total_revenue(
+        property_id, tenant_id, month, year, db_session
+    )
     return Decimal(summary["total"])

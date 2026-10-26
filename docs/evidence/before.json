@@ -1,0 +1,24 @@
+[
+  {
+    "email": "sunset@propertyflow.com",
+    "login_status": 200,
+    "summary_status": 200,
+    "summary": {
+      "property_id": "prop-001",
+      "total_revenue": 1000.0,
+      "currency": "USD",
+      "reservations_count": 3
+    }
+  },
+  {
+    "email": "ocean@propertyflow.com",
+    "login_status": 200,
+    "summary_status": 200,
+    "summary": {
+      "property_id": "prop-001",
+      "total_revenue": 1000.0,
+      "currency": "USD",
+      "reservations_count": 3
+    }
+  }
+]

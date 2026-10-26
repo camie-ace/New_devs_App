@@ -33,7 +33,6 @@ import GlobalToast from "./components/GlobalToast";
 import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
-import localforage from "localforage";
 
 // Create context for sidebar state
 interface SidebarContextType {
@@ -82,9 +81,9 @@ const queryClient = new QueryClient({
   },
 });
 
-// Create persister using localforage (IndexedDB)
+// This persister requires synchronous storage; IndexedDB returns Promises.
 const persister = createSyncStoragePersister({
-  storage: localforage as any,
+  storage: window.sessionStorage,
 });
 
 function AppWrapper() {

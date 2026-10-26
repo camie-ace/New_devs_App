@@ -1,4 +1,5 @@
 """Integration tests use isolated PostgreSQL schemas; supplied sample data stays unchanged."""
+
 import os
 from pathlib import Path
 from uuid import uuid4
@@ -6,14 +7,13 @@ from uuid import uuid4
 import httpx
 import pytest
 import pytest_asyncio
-from fastapi import FastAPI
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-
 from app.api.v1 import dashboard, login
 from app.core import auth
 from app.core.database_pool import DatabasePool
 from app.services import cache, reservations
+from fastapi import FastAPI
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 
 class MemoryRedis:
@@ -46,7 +46,9 @@ async def db(monkeypatch):
     admin = create_async_engine(url)
     async with admin.begin() as connection:
         await connection.execute(text(f'CREATE SCHEMA "{schema}"'))
-    engine = create_async_engine(url, connect_args={"server_settings": {"search_path": f"{schema},public"}})
+    engine = create_async_engine(
+        url, connect_args={"server_settings": {"search_path": f"{schema},public"}}
+    )
     async with engine.begin() as connection:
         raw = await connection.get_raw_connection()
         root = Path(__file__).resolve().parents[2] / "database"
@@ -71,7 +73,9 @@ async def api(db, memory_cache):
     app = FastAPI()
     app.include_router(login.router, prefix="/api/v1")
     app.include_router(dashboard.router, prefix="/api/v1")
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as client:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://test"
+    ) as client:
         yield client
     auth.clear_auth_cache()
 
@@ -82,6 +86,8 @@ async def login_as(client, tenant="a"):
         "b": ("ocean@propertyflow.com", "client_b_2024"),
     }
     email, password = credentials[tenant]
-    response = await client.post("/api/v1/auth/login", json={"email": email, "password": password})
+    response = await client.post(
+        "/api/v1/auth/login", json={"email": email, "password": password}
+    )
     assert response.status_code == 200
     return {"Authorization": "Bearer " + response.json()["access_token"]}

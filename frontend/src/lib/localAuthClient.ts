@@ -1,4 +1,6 @@
 // Local authentication client to replace Supabase
+import { decodeJWTPayload } from '../utils/jwtUtils';
+
 interface AuthUser {
   id: string;
   email: string;
@@ -16,11 +18,11 @@ interface AuthSession {
   user: AuthUser;
   token_type: string;
   expires_in?: number;
+  expires_at?: number;
 }
 
 interface AuthResponse {
-  user: AuthUser | null;
-  session: AuthSession | null;
+  data: { user: AuthUser | null; session: AuthSession | null };
   error: Error | null;
 }
 
@@ -69,6 +71,9 @@ class LocalAuthClient {
       const stored = localStorage.getItem(this.storageKey);
       if (stored) {
         this.session = JSON.parse(stored);
+        if (this.session?.access_token) {
+          this.session.expires_at = decodeJWTPayload(this.session.access_token)?.exp;
+        }
       }
     } catch (error) {
       console.warn('[LocalAuth] Failed to load session from storage:', error);
@@ -100,22 +105,15 @@ class LocalAuthClient {
         access_token: data.access_token,
         token_type: data.token_type || 'bearer',
         user: data.user,
+        expires_at: decodeJWTPayload(data.access_token)?.exp,
       };
 
       this.saveSession(session);
 
-      return {
-        user: data.user,
-        session: session,
-        error: null,
-      };
+      return { data: { user: data.user, session }, error: null };
     } catch (error: any) {
       console.error('[LocalAuth] Sign in failed:', error);
-      return {
-        user: null,
-        session: null,
-        error: error,
-      };
+      return { data: { user: null, session: null }, error };
     }
   }
 
@@ -144,7 +142,7 @@ class LocalAuthClient {
     }
   }
 
-  async getSession(): Promise<{ data: { session: AuthSession | null } }> {
+  async getSession(): Promise<{ data: { session: AuthSession | null }; error: Error | null }> {
     // Check if current session is still valid
     if (this.session?.access_token) {
       try {
@@ -156,7 +154,7 @@ class LocalAuthClient {
         });
 
         if (response.ok) {
-          return { data: { session: this.session } };
+          return { data: { session: this.session }, error: null };
         } else {
           // Session invalid, clear it
           this.saveSession(null);
@@ -167,14 +165,14 @@ class LocalAuthClient {
       }
     }
 
-    return { data: { session: null } };
+    return { data: { session: null }, error: null };
   }
 
-  async getUser(token?: string): Promise<{ user: AuthUser | null }> {
+  async getUser(token?: string): Promise<{ data: { user: AuthUser | null }; error: Error | null }> {
     const tokenToUse = token || this.session?.access_token;
 
     if (!tokenToUse) {
-      return { user: null };
+      return { data: { user: null }, error: null };
     }
 
     try {
@@ -186,22 +184,27 @@ class LocalAuthClient {
 
       if (response.ok) {
         const userData = await response.json();
-        return { user: userData };
+        return { data: { user: userData }, error: null };
       } else {
-        return { user: null };
+        return { data: { user: null }, error: new Error('Session is invalid') };
       }
     } catch (error) {
       console.error('[LocalAuth] Get user failed:', error);
-      return { user: null };
+      return { data: { user: null }, error: error instanceof Error ? error : new Error('Session validation failed') };
     }
   }
 
-  async setSession(session: AuthSession): Promise<{ error: Error | null }> {
+  async setSession(tokens: Pick<AuthSession, 'access_token' | 'refresh_token'>): Promise<AuthResponse> {
     try {
+      // Session recovery callers supply tokens only. Resolve the user on the server
+      // rather than storing a session with no user (or retaining another account).
+      const { data, error } = await this.getUser(tokens.access_token);
+      if (error || !data.user) throw error || new Error('Session is invalid');
+      const session: AuthSession = { ...tokens, user: data.user, token_type: 'bearer', expires_at: decodeJWTPayload(tokens.access_token)?.exp };
       this.saveSession(session);
-      return { error: null };
+      return { data: { user: data.user, session }, error: null };
     } catch (error: any) {
-      return { error: error };
+      return { data: { user: null, session: null }, error };
     }
   }
 

@@ -1,4 +1,5 @@
 """Shared async database pool for the PostgreSQL challenge database."""
+
 from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 

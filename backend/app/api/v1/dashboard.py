@@ -1,13 +1,12 @@
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
-from sqlalchemy.exc import SQLAlchemyError
-
 from app.core.auth import authenticate_request
 from app.models.auth import AuthenticatedUser
 from app.services.cache import get_revenue_summary
 from app.services.reservations import MixedCurrencies, PropertyNotFound, list_properties
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from sqlalchemy.exc import SQLAlchemyError
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -21,7 +20,8 @@ def require_tenant(user: AuthenticatedUser):
 
 @router.get("/dashboard/properties")
 async def get_dashboard_properties(
-    response: Response, current_user: AuthenticatedUser = Depends(authenticate_request),
+    response: Response,
+    current_user: Annotated[AuthenticatedUser, Depends(authenticate_request)],
 ):
     tenant_id = require_tenant(current_user)
     response.headers["Cache-Control"] = "no-store"
@@ -36,9 +36,9 @@ async def get_dashboard_properties(
 async def get_dashboard_summary(
     response: Response,
     property_id: Annotated[str, Query(min_length=1)],
+    current_user: Annotated[AuthenticatedUser, Depends(authenticate_request)],
     month: Annotated[int | None, Query(ge=1, le=12)] = None,
     year: Annotated[int | None, Query(ge=1, le=9998)] = None,
-    current_user: AuthenticatedUser = Depends(authenticate_request),
 ):
     tenant_id = require_tenant(current_user)
     if month is not None and year is None:
@@ -58,5 +58,7 @@ async def get_dashboard_summary(
         "total_revenue": data["total"],
         "currency": data["currency"],
         "reservations_count": data["count"],
-        "month": month, "year": year, "timezone": data["timezone"],
+        "month": month,
+        "year": year,
+        "timezone": data["timezone"],
     }
