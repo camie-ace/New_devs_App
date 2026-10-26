@@ -11,6 +11,6 @@ architecture and seed data are preserved. Both provided accounts were tested.
 43 regression tests pass, including GitHub Actions on PostgreSQL 15; the
 production frontend build and recorded browser checks pass.
 
-Final submission is pending the required Loom URL and the original email's
-submission destination. The repository does not contain a submission form,
-reply address, email sent time, or deadline timestamp.
+Final submission requires the published Loom URL. Use the private submission
+page in the original assessment email; candidate-specific links and deadline
+details are intentionally kept out of this public repository.
