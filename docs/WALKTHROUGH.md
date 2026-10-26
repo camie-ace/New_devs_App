@@ -1,5 +1,7 @@
 # Loom walkthrough outline (about 6 minutes)
 
+The [full silent walkthrough is recorded (6:51)](evidence/walkthrough-silent.mp4). Add your voice-over using the [matching chapter timestamps and narration draft](VOICEOVER.txt).
+
 Record the application window and the relevant code. The assignment specifically requires a Loom video; this outline and the supporting browser recording do not claim to replace a published Loom URL.
 
 ## 0:00–0:40 — Reproduce and set expectations
