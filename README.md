@@ -3,10 +3,8 @@
 The existing dashboard now calculates revenue from PostgreSQL, isolates tenants in queries and caches, reports local calendar months/years, and keeps money exact through the API and UI.
 
 - [Findings, root causes, and verification](docs/INVESTIGATION.md)
-- [5–7 minute Loom recording outline](docs/WALKTHROUGH.md)
 - [45-second browser verification recording (MP4, silent)](docs/evidence/demo.mp4)
-- [Full 6:51 walkthrough (MP4, silent, ready for voice-over)](docs/evidence/walkthrough-silent.mp4)
-- [Matching chapter timestamps and narration draft](docs/VOICEOVER.txt)
+- [Full 6:51 walkthrough (MP4, silent)](docs/evidence/walkthrough-silent.mp4)
 - [Original assignment](ASSIGNMENT.md)
 
 ## Run
