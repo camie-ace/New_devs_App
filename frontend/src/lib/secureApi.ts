@@ -179,14 +179,9 @@ export class SecureAPIClient {
       if (token) {
         let extractedTenantId = null;
 
-        // Handle static local token.
-        if (token === "mock-token-123") {
-          extractedTenantId = "tenant-a";
-        }
-        // Check if it's a valid JWT
-        else if (token.includes('.') && token.split('.').length === 3) {
+        if (token.includes('.') && token.split('.').length === 3) {
           const payload = JSON.parse(atob(token.split('.')[1]));
-          extractedTenantId = payload.user_metadata?.tenant_id || payload.tenant_id;
+          extractedTenantId = payload.app_metadata?.tenant_id || payload.tenant_id;
         }
 
         if (extractedTenantId) {
@@ -224,12 +219,12 @@ export class SecureAPIClient {
       if (token) {
         const payload = JSON.parse(atob(token.split('.')[1]));
         // Use user sub (unique ID) + email as session key for isolation
-        const userSub = payload.sub;
+        const userSub = payload.sub || payload.id;
         const userEmail = payload.email;
 
         if (userSub && userEmail) {
           // Create short hash to avoid very long cache keys
-          const sessionKey = `${userSub.substring(0, 8)}-${userEmail.split('@')[0]}`;
+          const sessionKey = `${userSub}:${userEmail}`;
           return sessionKey;
         }
       }
@@ -243,9 +238,9 @@ export class SecureAPIClient {
    * Validate tenant ID format for security
    */
   private isValidTenantId(tenantId: string): boolean {
-    // Check for UUID format (basic validation)
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    return typeof tenantId === 'string' && tenantId.length > 0 && uuidRegex.test(tenantId);
+    // Tenant IDs are TEXT in the supplied schema (e.g. tenant-a).
+    // The server validates membership; this check only governs local cache use.
+    return typeof tenantId === 'string' && /^[a-zA-Z0-9_-]{1,128}$/.test(tenantId);
   }
 
   /**
@@ -1450,22 +1445,21 @@ export class SecureAPIClient {
 
   // ============= DASHBOARD API =============
   /**
-   * Get dashboard summary with optional simulation header
+   * Get the authenticated tenant's dashboard data for a calendar period.
    */
-  async getDashboardSummary(propertyId: string, options?: { simulatedTenant?: string, timestamp?: number }) {
+  async getDashboardSummary(propertyId: string, options?: { month?: number, year?: number }) {
     const queryParams = new URLSearchParams({ property_id: propertyId });
-    if (options?.timestamp) {
-      queryParams.append('_t', options.timestamp.toString());
+    if (options?.month !== undefined) {
+      queryParams.set('month', String(options.month));
     }
-
-    const requestOptions: RequestInit = {};
-    if (options?.simulatedTenant) {
-      requestOptions.headers = {
-        'X-Simulated-Tenant': options.simulatedTenant
-      };
+    if (options?.year !== undefined) {
+      queryParams.set('year', String(options.year));
     }
+    return this.request<any>(`/api/v1/dashboard/summary?${queryParams}`);
+  }
 
-    return this.request<any>(`/api/v1/dashboard/summary?${queryParams}`, requestOptions);
+  async getDashboardProperties() {
+    return this.request<Array<{ id: string; name: string; timezone: string }>>('/api/v1/dashboard/properties');
   }
 
   async uploadCompanyLogo(logo_url: string) {

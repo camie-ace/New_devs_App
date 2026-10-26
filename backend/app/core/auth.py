@@ -83,7 +83,8 @@ async def authenticate_request(
     # Check cache first
     if token_hash in auth_cache:
         cached_data = auth_cache[token_hash]
-        if datetime.now().timestamp() - cached_data["timestamp"] < CACHE_DURATION:
+        if (datetime.now().timestamp() - cached_data["timestamp"] < CACHE_DURATION
+            and datetime.now().timestamp() < cached_data.get("expires_at", 0)):
             cached_user = cached_data["user"]
             # If not, force a refresh to get proper tenant isolation
             if not cached_user.tenant_id:
@@ -111,7 +112,8 @@ async def authenticate_request(
                     token, 
                     settings.secret_key, 
                     algorithms=["HS256"],
-                    audience="authenticated"  # Accept tokens with aud: "authenticated"
+                    audience="authenticated",  # Accept tokens with aud: "authenticated"
+                    options={"require_exp": True},
                 )
                 logger.info(f"AUTH: Successfully decoded custom JWT token for {payload.get('email')}")
                 
@@ -125,6 +127,8 @@ async def authenticate_request(
                         self.raw_app_metadata = payload.get('app_metadata', {})
                         
                 user = MockUser(payload)
+                # A local token's tenant must come from verified server-issued claims.
+                user.tenant_id = payload.get('tenant_id') or user.app_metadata.get('tenant_id')
                 
             except JWTError:
                 # If custom JWT fails, try Supabase auth
@@ -253,7 +257,9 @@ async def authenticate_request(
         logger.info(f"User: {user.email} (ID: {user.id})")
 
         # Use TenantResolver for comprehensive tenant resolution
-        tenant_id = await TenantResolver.resolve_tenant_id(token=token, user_id=user.id, user_email=user.email)
+        tenant_id = getattr(user, 'tenant_id', None) or (getattr(user, 'app_metadata', None) or {}).get('tenant_id')
+        if not tenant_id:
+            raise HTTPException(status_code=403, detail="Tenant context required")
 
         # If we found a tenant_id and it's not in the user's metadata, update it for next time
         current_tenant_in_metadata = None
@@ -281,6 +287,7 @@ async def authenticate_request(
         auth_cache[token_hash] = {
             "user": auth_user,
             "timestamp": datetime.now().timestamp(),
+            "expires_at": jwt.get_unverified_claims(token).get("exp", 0),
         }
 
         # Clean up old cache entries (keep cache size manageable)
